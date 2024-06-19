@@ -25,6 +25,7 @@
     "@vercel/edge": "^0.2.7",
     "chatgpt": "^5",
     "dotenv": "^16.0.3",
+    "minimatch": "^5.1.0",
     "next": "^13.1.6",
     "node-fetch": "^3.3.0",
     "probot": "^12.2.4"
@@ -35,6 +36,7 @@
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-typescript": "^11.0.0",
     "@types/jest": "^29.0.0",
+    "@types/minimatch": "^5.1.2",
     "@types/node": "^18.0.0",
     "@types/pino-std-serializers": "^4.0.0",
     "@vercel/ncc": "^0.36.1",

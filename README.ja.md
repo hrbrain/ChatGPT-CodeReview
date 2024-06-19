@@ -38,7 +38,14 @@ example:
 [actions/chatgpt-codereviewer](https://github.com/marketplace/actions/chatgpt-codereviewer)
 
 1. `OPENAI_API_KEY` を設定する
-2. 以下の例のように `.github/workflows/cr.yml` を作成する
+1. 以下の例のように `.github/workflows/cr.yml` を作成する
+1. PR作成時やPRにプッシュした際にChatGPTによるレビューがPRにコメントされる
+    1. PRに下記のラベルがついていた場合はレビューされません
+        1. `no-review-by-ChatGPT`
+        1. `renovate/Major`
+        1. `renovate/Minor`
+        1. `renovate/Patch`
+        1. `renovate/security`
 
 ```yml
 name: Code Review
@@ -53,19 +60,25 @@ on:
 
 jobs:
   test:
-    if: ${{ contains(github.event.*.labels.*.name, 'gpt review') }} # Optional; to run only when a label is attached
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
     steps:
-      - uses: anc95/ChatGPT-CodeReview@main
+      - uses: hrbrain/ChatGPT-CodeReview@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TARGETS: 'app/***,libs/**' # comma separated
+          IGNORE: '**/*.pb.go,**/mocks/**' # comma separated, please set NONE when no file is ignored.
           # Optional
-          LANGUAGE: Chinese
-          MODEL:
-          PROMPT:
-          top_p: 1
-          temperature: 1
+          LANGUAGE: English # Default: Japanese
+          OPENAI_API_ENDPOINT: https://api.openai.com/v1
+          MODEL: gpt-3.5-turbo # Default: gpt-4o, https://platform.openai.com/docs/models
+          PROMPT: Please review the changes # Default: Below is a code patch, please help me do a brief code review on it. Any bug risks and/or improvement suggestions are welcome
+          top_p: 0.5 # Default: 1, https://platform.openai.com/docs/api-reference/chat/create#chat-create-top_p
+          temperature: 0.5 # Default: 1, https://platform.openai.com/docs/api-reference/chat/create#chat-create-temperature
+          max_tokens: 10000 # Default: undefined, https://platform.openai.com/docs/api-reference/chat/create#chat-create-max_tokens
+          MAX_PATCH_LENGTH: 5000 # Default: 10000, if the patch/diff length is large than MAX_PATCH_LENGTH, will be ignored and won't review. By default, with no MAX_PATCH_LENGTH set, there is also no limit for the patch/diff length.
 ```
 
 ## Self-hosting

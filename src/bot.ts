@@ -1,11 +1,12 @@
 import { Context, Probot } from 'probot';
+import minimatch from 'minimatch';
 
 import { Chat } from './chat.js';
 
 const OPENAI_API_KEY = 'OPENAI_API_KEY';
 const MAX_PATCH_COUNT = process.env.MAX_PATCH_LENGTH
   ? +process.env.MAX_PATCH_LENGTH
-  : Infinity;
+  : 10000;
 
 export const robot = (app: Probot) => {
   const loadChat = async (context: Context) => {
@@ -62,14 +63,39 @@ export const robot = (app: Probot) => {
         return 'invalid event payload';
       }
 
-      const target_label = process.env.TARGET_LABEL;
-      if (
-        target_label &&
-        (!pull_request.labels?.length ||
-          pull_request.labels.every((label) => label.name !== target_label))
-      ) {
-        console.log('no target label attached');
-        return 'no target label attached';
+      const noReviewLabels = [
+        'no-review-by-ChatGPT',
+        'renovate/Major',
+        'renovate/Minor',
+        'renovate/Patch',
+        'renovate/security'
+      ]
+      if (pull_request.labels?.some(label => noReviewLabels.includes(label.name))) {
+        console.log('no-review label is attached.');
+        return 'no-review label is attached.'
+      }
+
+      const targets = (process.env.TARGETS || process.env.targets || '')
+        .split(',')
+        .filter((v) => v !== '');
+      if (targets.length === 0) {
+        console.log('no target specified');
+        return 'no target specified';
+      }
+
+      var ignoreList: string[] = []
+      const ignore = process.env.IGNORE || process.env.ignore || '';
+      if (ignore === '') {
+        console.log('no ignore specified');
+        return 'no ignore specified';
+      } else if (ignore !== 'NONE') {
+        ignoreList = ignore
+          .split(',')
+          .filter((v) => v !== '');
+        if (ignoreList.length === 0) {
+          console.log('no ignore specified');
+          return 'no ignore specified';
+        }
       }
 
       const data = await context.octokit.repos.compareCommits({
@@ -79,33 +105,10 @@ export const robot = (app: Probot) => {
         head: context.payload.pull_request.head.sha,
       });
 
-      let { files: changedFiles, commits } = data.data;
-
-      if (context.payload.action === 'synchronize' && commits.length >= 2) {
-        const {
-          data: { files },
-        } = await context.octokit.repos.compareCommits({
-          owner: repo.owner,
-          repo: repo.repo,
-          base: commits[commits.length - 2].sha,
-          head: commits[commits.length - 1].sha,
-        });
-
-        const ignoreList = (process.env.IGNORE || process.env.ignore || '')
-          .split('\n')
-          .filter((v) => v !== '');
-
-        const filesNames = files?.map((file) => file.filename) || [];
-        changedFiles = changedFiles?.filter(
-          (file) =>
-            filesNames.includes(file.filename) &&
-            !ignoreList.includes(file.filename)
-        );
-      }
-
+      const { files: changedFiles, commits } = data.data;
       if (!changedFiles?.length) {
         console.log('no change found');
-        return 'no change';
+        return 'no change found';
       }
 
       console.time('gpt cost');
@@ -118,12 +121,21 @@ export const robot = (app: Probot) => {
           continue;
         }
 
-        if (!patch || patch.length > MAX_PATCH_COUNT) {
-          console.log(
-            `${file.filename} skipped caused by its diff is too large`
-          );
+        if (!targets.some(target => minimatch(file.filename, target))) {
+          console.log(`${file.filename} is not in targets.`);
           continue;
         }
+
+        if (ignoreList.some(ignore => minimatch(file.filename, ignore))) {
+          console.log(`${file.filename} is ignored.`);
+          continue;
+        }
+
+        if (!patch || patch.length > MAX_PATCH_COUNT) {
+          console.log(`${file.filename} skipped caused by its diff is too large.`);
+          continue;
+        }
+
         try {
           const res = await chat?.codeReview(patch);
 
