@@ -63,14 +63,16 @@ export const robot = (app: Probot) => {
         return 'invalid event payload';
       }
 
-      const target_label = process.env.TARGET_LABEL;
-      if (
-        target_label &&
-        (!pull_request.labels?.length ||
-          pull_request.labels.every((label) => label.name !== target_label))
-      ) {
-        console.log('no target label attached');
-        return 'no target label attached';
+      const noReviewLabels = [
+        'no-review-by-ChatGPT',
+        'renovate/Major',
+        'renovate/Minor',
+        'renovate/Patch',
+        'renovate/security'
+      ]
+      if (pull_request.labels?.some(label => noReviewLabels.includes(label.name))) {
+        console.log('no-review label is attached.');
+        return 'no-review label is attached.'
       }
 
       const targets = (process.env.TARGETS || process.env.targets || '')
@@ -81,9 +83,20 @@ export const robot = (app: Probot) => {
         return 'no target specified';
       }
 
-      const ignoreList = (process.env.IGNORE || process.env.ignore || '')
-        .split(',')
-        .filter((v) => v !== '');
+      var ignoreList: string[] = []
+      const ignore = process.env.IGNORE || process.env.ignore || '';
+      if (ignore === '') {
+        console.log('no ignore specified');
+        return 'no ignore specified';
+      } else if (ignore !== 'NONE') {
+        ignoreList = ignore
+          .split(',')
+          .filter((v) => v !== '');
+        if (ignoreList.length === 0) {
+          console.log('no ignore specified');
+          return 'no ignore specified';
+        }
+      }
 
       const data = await context.octokit.repos.compareCommits({
         owner: repo.owner,
@@ -92,22 +105,7 @@ export const robot = (app: Probot) => {
         head: context.payload.pull_request.head.sha,
       });
 
-      let { files: changedFiles, commits } = data.data;
-
-      if (context.payload.action === 'synchronize' && commits.length >= 2) {
-        const {
-          data: { files },
-        } = await context.octokit.repos.compareCommits({
-          owner: repo.owner,
-          repo: repo.repo,
-          base: commits[commits.length - 2].sha,
-          head: commits[commits.length - 1].sha,
-        });
-
-        const filesNames = files?.map((file) => file.filename) || [];
-        changedFiles = changedFiles?.filter((file) => filesNames.includes(file.filename));
-      }
-
+      const { files: changedFiles, commits } = data.data;
       if (!changedFiles?.length) {
         console.log('no change found');
         return 'no change found';
