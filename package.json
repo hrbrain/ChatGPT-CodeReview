@@ -36,6 +36,7 @@
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-typescript": "^11.0.0",
     "@types/jest": "^29.0.0",
+    "@types/minimatch": "^5.1.2",
     "@types/node": "^18.0.0",
     "@types/pino-std-serializers": "^4.0.0",
     "@vercel/ncc": "^0.36.1",
