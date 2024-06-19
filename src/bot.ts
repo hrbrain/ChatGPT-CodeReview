@@ -105,6 +105,16 @@ export const robot = (app: Probot) => {
           .filter((v) => v !== '');
 
         const filesNames = files?.map((file) => file.filename) || [];
+        console.log('filesNames', filesNames)
+        console.log('targets', targets)
+        console.log('ignoreList', ignoreList)
+        changedFiles?.forEach(f => {
+          console.log(
+            f.filename,
+            targets.some(target =>  minimatch(f.filename, target)),
+            ignoreList.some(ignore =>  minimatch(f.filename, ignore))
+          )
+        });
         changedFiles = changedFiles?.filter(
           (file) =>
             filesNames.includes(file.filename) &&
@@ -115,7 +125,7 @@ export const robot = (app: Probot) => {
 
       if (!changedFiles?.length) {
         console.log('no change found');
-        return 'no change';
+        return 'no change found';
       }
 
       console.time('gpt cost');
