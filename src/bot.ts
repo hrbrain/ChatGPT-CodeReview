@@ -5,7 +5,7 @@ import { Chat } from './chat.js';
 const OPENAI_API_KEY = 'OPENAI_API_KEY';
 const MAX_PATCH_COUNT = process.env.MAX_PATCH_LENGTH
   ? +process.env.MAX_PATCH_LENGTH
-  : Infinity;
+  : 10000;
 
 export const robot = (app: Probot) => {
   const loadChat = async (context: Context) => {
