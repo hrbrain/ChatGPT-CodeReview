@@ -1,4 +1,5 @@
 import { Context, Probot } from 'probot';
+import minimatch from 'minimatch';
 
 import { Chat } from './chat.js';
 
@@ -99,7 +100,7 @@ export const robot = (app: Probot) => {
         changedFiles = changedFiles?.filter(
           (file) =>
             filesNames.includes(file.filename) &&
-            !ignoreList.includes(file.filename)
+            !ignoreList.some(ignore =>  minimatch(file.filename, ignore))
         );
       }
 
