@@ -92,6 +92,14 @@ export const robot = (app: Probot) => {
           head: commits[commits.length - 1].sha,
         });
 
+        const targets = (process.env.TARGETS || process.env.targets || '')
+          .split(',')
+          .filter((v) => v !== '');
+        if (targets.length === 0) {
+          console.log('no target specified');
+          return 'no target specified';
+        }
+
         const ignoreList = (process.env.IGNORE || process.env.ignore || '')
           .split(',')
           .filter((v) => v !== '');
@@ -100,6 +108,7 @@ export const robot = (app: Probot) => {
         changedFiles = changedFiles?.filter(
           (file) =>
             filesNames.includes(file.filename) &&
+            targets.some(target =>  minimatch(file.filename, target)) &&
             !ignoreList.some(ignore =>  minimatch(file.filename, ignore))
         );
       }
