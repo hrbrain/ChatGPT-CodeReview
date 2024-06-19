@@ -93,7 +93,7 @@ export const robot = (app: Probot) => {
         });
 
         const ignoreList = (process.env.IGNORE || process.env.ignore || '')
-          .split('\n')
+          .split(',')
           .filter((v) => v !== '');
 
         const filesNames = files?.map((file) => file.filename) || [];
