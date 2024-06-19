@@ -60,14 +60,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: check_changed_file
-    if: github.event_name == 'pull_request' && contains(needs.check_changed_file.outputs.changes, 'apps/hachi/app')
+    if: github.event_name == 'pull_request'
     steps:
       - uses: hrbrain/ChatGPT-CodeReview@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          TARGETS: 'apps/hachi/***,libs/proto/hachi/grpc/**' # comma separated
+          TARGETS: 'app/***,libs/**' # comma separated
           IGNORE: '**/*.pb.go,**/mocks/**' # comma separated, please set NONE when no file is ignored.
           # Optional
           LANGUAGE: English # Default: Japanese
