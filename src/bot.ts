@@ -70,6 +70,9 @@ export const robot = (app: Probot) => {
         'renovate/Patch',
         'renovate/security'
       ]
+      pull_request.labels?.forEach(label => {
+        console.log(label.name);
+      });
       if (pull_request.labels?.some(label => noReviewLabels.includes(label.name))) {
         console.log('no-review label is attached.');
         return 'no-review label is attached.'
