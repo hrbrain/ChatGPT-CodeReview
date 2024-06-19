@@ -73,6 +73,18 @@ export const robot = (app: Probot) => {
         return 'no target label attached';
       }
 
+      const targets = (process.env.TARGETS || process.env.targets || '')
+        .split(',')
+        .filter((v) => v !== '');
+      if (targets.length === 0) {
+        console.log('no target specified');
+        return 'no target specified';
+      }
+
+      const ignoreList = (process.env.IGNORE || process.env.ignore || '')
+        .split(',')
+        .filter((v) => v !== '');
+
       const data = await context.octokit.repos.compareCommits({
         owner: repo.owner,
         repo: repo.repo,
@@ -92,35 +104,8 @@ export const robot = (app: Probot) => {
           head: commits[commits.length - 1].sha,
         });
 
-        const targets = (process.env.TARGETS || process.env.targets || '')
-          .split(',')
-          .filter((v) => v !== '');
-        if (targets.length === 0) {
-          console.log('no target specified');
-          return 'no target specified';
-        }
-
-        const ignoreList = (process.env.IGNORE || process.env.ignore || '')
-          .split(',')
-          .filter((v) => v !== '');
-
         const filesNames = files?.map((file) => file.filename) || [];
-        console.log('filesNames', filesNames)
-        console.log('targets', targets)
-        console.log('ignoreList', ignoreList)
-        changedFiles?.forEach(f => {
-          console.log(
-            f.filename,
-            targets.some(target =>  minimatch(f.filename, target)),
-            ignoreList.some(ignore =>  minimatch(f.filename, ignore))
-          )
-        });
-        changedFiles = changedFiles?.filter(
-          (file) =>
-            filesNames.includes(file.filename) &&
-            targets.some(target =>  minimatch(file.filename, target)) &&
-            !ignoreList.some(ignore =>  minimatch(file.filename, ignore))
-        );
+        changedFiles = changedFiles?.filter((file) => filesNames.includes(file.filename));
       }
 
       if (!changedFiles?.length) {
@@ -138,12 +123,21 @@ export const robot = (app: Probot) => {
           continue;
         }
 
-        if (!patch || patch.length > MAX_PATCH_COUNT) {
-          console.log(
-            `${file.filename} skipped caused by its diff is too large`
-          );
+        if (!targets.some(target => minimatch(file.filename, target))) {
+          console.log(`${file.filename} is not in targets.`);
           continue;
         }
+
+        if (ignoreList.some(ignore => minimatch(file.filename, ignore))) {
+          console.log(`${file.filename} is ignored.`);
+          continue;
+        }
+
+        if (!patch || patch.length > MAX_PATCH_COUNT) {
+          console.log(`${file.filename} skipped caused by its diff is too large.`);
+          continue;
+        }
+
         try {
           const res = await chat?.codeReview(patch);
 
