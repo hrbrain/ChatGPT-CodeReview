@@ -39,7 +39,6 @@ ${patch}
 
 Review Format
 
-\`\`\`
 ## Review Summary
 
 ## Bug Risks
@@ -52,8 +51,7 @@ Review Format
 
 ### 1. ~ (1st suggestion, please fill the title)
 
-(Please continue to comment as needed.)
-\`\`\``;
+(Please continue to comment as needed.)`;
     }
   };
 
@@ -68,7 +66,6 @@ Review Format
 
     console.time('code-review cost');
     const prompt = this.generatePrompt(fileExtension, patch);
-    console.info(prompt)
 
     const res = await this.chatAPI.sendMessage(prompt);
 
