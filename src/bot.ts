@@ -120,29 +120,22 @@ export const robot = (app: Probot) => {
     for (let i = 0; i < changedFiles.length; i++) {
       const file = changedFiles[i];
       const patch = file.patch || '';
-
       if (file.status !== 'modified' && file.status !== 'added') {
+        console.log(`${file.filename} is not modified or added`);
         continue;
-      }
-
-      if (!targets.some(target => minimatch(file.filename, target))) {
-        console.log(`${file.filename} is not in targets.`);
+      } else if (!targets.some(target => minimatch(file.filename, target))) {
+        console.log(`${file.filename} is not in targets`);
         continue;
-      }
-
-      if (ignoreList.some(ignore => minimatch(file.filename, ignore))) {
-        console.log(`${file.filename} is ignored.`);
+      } else if (ignoreList.some(ignore => minimatch(file.filename, ignore))) {
+        console.log(`${file.filename} is ignored`);
         continue;
-      }
-
-      if (!patch || patch.length > MAX_PATCH_COUNT) {
-        console.log(`${file.filename} skipped caused by its diff is too large.`);
+      } else if (!patch || patch.length > MAX_PATCH_COUNT) {
+        console.log(`${file.filename} skipped caused by its diff is too large`);
         continue;
       }
 
       try {
-        const res = await chat?.codeReview(file.filename, patch);
-
+        const res = await chat.codeReview(file.filename, patch);
         if (!!res) {
           await context.octokit.pulls.createReviewComment({
             repo: repo.repo,
