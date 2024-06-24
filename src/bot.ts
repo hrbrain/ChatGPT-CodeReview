@@ -63,16 +63,18 @@ export const robot = (app: Probot) => {
         return 'invalid event payload';
       }
 
-      const noReviewLabels = [
-        'no-review-by-ChatGPT',
-        'renovate/Major',
-        'renovate/Minor',
-        'renovate/Patch',
-        'renovate/security'
-      ]
-      if (pull_request.labels?.some(label => noReviewLabels.includes(label.name))) {
-        console.log('no-review label is attached.');
-        return 'no-review label is attached.'
+      if (process.env.TRIGGER !== 'command') {
+        const noReviewLabels = [
+          'no-review-by-ChatGPT',
+          'renovate/Major',
+          'renovate/Minor',
+          'renovate/Patch',
+          'renovate/security'
+        ]
+        if (pull_request.labels?.some(label => noReviewLabels.includes(label.name))) {
+          console.log('no-review label is attached.');
+          return 'no-review label is attached.'
+        }
       }
 
       const targets = (process.env.TARGETS || process.env.targets || '')
@@ -137,7 +139,7 @@ export const robot = (app: Probot) => {
         }
 
         try {
-          const res = await chat?.codeReview(patch);
+          const res = await chat?.codeReview(file.filename, patch);
 
           if (!!res) {
             await context.octokit.pulls.createReviewComment({

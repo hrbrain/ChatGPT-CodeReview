@@ -18,27 +18,54 @@ export class Chat {
     });
   }
 
-  private generatePrompt = (patch: string) => {
-    const answerLanguage = process.env.LANGUAGE
-      ? `Answer me in ${process.env.LANGUAGE},`
-      : 'Answer me in Japanese,';
+  private generatePrompt = (fileExtension: string, patch: string) => {
+    const answerLanguage = process.env.LANGUAGE ? process.env.LANGUAGE : 'Japanese';
+    if (!!process.env.PROMPT){
+      return `${process.env.PROMPT}, Answer me in ${answerLanguage}:
+      ${patch}
+      `;
+    } else {
+      const fileTypeMessage = fileExtension !== '' ? ` for a ${fileExtension} file` : '';
 
-    const prompt =
-      process.env.PROMPT ||
-        'Below is a code patch, please help me do a brief code review on it. Any bug risks and/or improvement suggestions are welcome:';
+      return `You are a skilled software engineer.
+Below is a code patch${fileTypeMessage}. Please help me review it.
+The review comments must be in the following format in ${answerLanguage}.
 
-    return `${prompt}, ${answerLanguage}:
-    ${patch}
-    `;
+Patch
+
+\`\`\`
+${patch}
+\`\`\`
+
+Review Format
+
+## Review Summary
+
+## Bug Risks
+
+### 1. ~ (1st risk, please fill the title)
+
+(Please continue to comment as needed.)
+
+## Improvement Suggestions
+
+### 1. ~ (1st suggestion, please fill the title)
+
+(Please continue to comment as needed.)`;
+    }
   };
 
-  public codeReview = async (patch: string) => {
+  public codeReview = async (filePath: string, patch: string) => {
     if (!patch) {
       return '';
     }
 
+    const fileName = filePath.split('/').at(-1) as string;
+    const splitFileName = fileName.split('.');
+    const fileExtension = splitFileName.length > 1 ? splitFileName.at(-1) as string : '';
+
     console.time('code-review cost');
-    const prompt = this.generatePrompt(patch);
+    const prompt = this.generatePrompt(fileExtension, patch);
 
     const res = await this.chatAPI.sendMessage(prompt);
 
