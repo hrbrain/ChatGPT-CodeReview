@@ -43,6 +43,15 @@ export const robot = (app: Probot) => {
   };
 
   app.on(
+    ['repository_dispatch'],
+    async (context) => {
+      const repo = context.repo();
+      console.info(repo.owner, repo.repo);
+      console.info(context.payload);
+    }
+  );
+
+  app.on(
     ['pull_request.opened', 'pull_request.synchronize'],
     async (context) => {
       const repo = context.repo();
