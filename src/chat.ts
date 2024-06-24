@@ -20,7 +20,7 @@ export class Chat {
 
   private generatePrompt = (fileExtension: string, patch: string) => {
     const answerLanguage = process.env.LANGUAGE ? process.env.LANGUAGE : 'Japanese';
-    if (process.env.PROMPT !== ''){
+    if (!!process.env.PROMPT){
       return `${process.env.PROMPT}, Answer me in ${answerLanguage}:
       ${patch}
       `;
