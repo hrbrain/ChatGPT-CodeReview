@@ -68,7 +68,7 @@ Review Format
 
     console.time('code-review cost');
     const prompt = this.generatePrompt(fileExtension, patch);
-    console.log(prompt)
+    console.info(prompt)
 
     const res = await this.chatAPI.sendMessage(prompt);
 
