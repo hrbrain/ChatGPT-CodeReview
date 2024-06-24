@@ -8,6 +8,16 @@ const MAX_PATCH_COUNT = process.env.MAX_PATCH_LENGTH
   ? +process.env.MAX_PATCH_LENGTH
   : 10000;
 
+type PullRequest = {
+  pullNumber: number;
+  baseSha: string;
+  headSha: string;
+  labels: string[];
+  state: 'open' | 'closed';
+  locked: boolean;
+  url: string;
+};
+
 export const robot = (app: Probot) => {
   const loadChat = async (context: Context) => {
     if (process.env.OPENAI_API_KEY) {
@@ -42,12 +52,34 @@ export const robot = (app: Probot) => {
     }
   };
 
+  const review = async (context: Context, pullRequest: PullRequest) => {
+    const chat = await loadChat(context);
+    if (!chat) {
+      console.log('Chat initialized failed');
+      return 'no chat';
+    }
+
+    const repo = context.repo();
+    console.info(repo.owner, repo.repo);
+    console.info(pullRequest);
+
+    return 'success'
+  };
+
   app.on(
     ['repository_dispatch'],
     async (context) => {
-      const repo = context.repo();
-      console.info(repo.owner, repo.repo);
-      console.info(context.payload);
+      const pr = context.payload.client_payload.pull_request as any;
+      const pullRequest: PullRequest = {
+        pullNumber: pr.number as number,
+        baseSha: pr.base.sha as string,
+        headSha: pr.head.sha as string,
+        labels: pr.labels?.map((l: any) => l.name) as string[],
+        state: pr.state as 'open' | 'closed',
+        locked: pr.locked as boolean,
+        url: pr.html_url as string
+      };
+      await review(context, pullRequest);
     }
   );
 
@@ -63,6 +95,17 @@ export const robot = (app: Probot) => {
       }
 
       const pull_request = context.payload.pull_request;
+
+      const pullRequest: PullRequest = {
+        pullNumber: context.pullRequest().pull_number,
+        baseSha: pull_request.base.sha,
+        headSha: pull_request.head.sha,
+        labels: pull_request.labels?.map(l => l.name),
+        state: pull_request.state,
+        locked: pull_request.locked,
+        url: pull_request.html_url
+      };
+      await review(context, pullRequest);
 
       if (
         pull_request.state === 'closed' ||
