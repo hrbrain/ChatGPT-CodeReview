@@ -134,12 +134,11 @@ export const robot = (app: Probot) => {
         continue;
       }
 
+      console.log(`${file.filename} is reviewed`);
       try {
         const res = await chat.codeReview(file.filename, patch);
         if (!!res) {
-          console.log(`${file.filename} is reviewed`);
-          console.log(res);
-          const r = await context.octokit.pulls.createReviewComment({
+          await context.octokit.pulls.createReviewComment({
             repo: repo.repo,
             owner: repo.owner,
             pull_number: pullRequest.pullNumber,
@@ -148,8 +147,6 @@ export const robot = (app: Probot) => {
             body: res,
             position: patch.split('\n').length - 1,
           });
-          console.log(r.status);
-          console.log(r.data.body);
         }
       } catch (e) {
         console.error(`review ${file.filename} failed`, e);

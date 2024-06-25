@@ -7,13 +7,14 @@ export class Chat {
       apiKey: apikey,
       apiBaseUrl:
         process.env.OPENAI_API_ENDPOINT || 'https://api.openai.com/v1',
+      maxModelTokens: 20000,
       completionParams: {
         model: process.env.MODEL || 'gpt-4o',
         temperature: +(process.env.temperature || 0) || 1,
         top_p: +(process.env.top_p || 0) || 1,
         max_tokens: process.env.max_tokens
           ? +process.env.max_tokens
-          : undefined,
+          : 4000,
       },
     });
   }
@@ -66,11 +67,9 @@ Review Format
 
     console.time('code-review cost');
     const prompt = this.generatePrompt(fileExtension, patch);
-    console.log(prompt)
-
     const res = await this.chatAPI.sendMessage(prompt);
-
     console.timeEnd('code-review cost');
+
     return res.text;
   };
 }
