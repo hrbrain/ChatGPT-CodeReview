@@ -78,7 +78,7 @@ jobs:
           top_p: 0.5 # Default: 1, https://platform.openai.com/docs/api-reference/chat/create#chat-create-top_p
           temperature: 0.5 # Default: 1, https://platform.openai.com/docs/api-reference/chat/create#chat-create-temperature
           max_tokens: 10000 # Default: undefined, https://platform.openai.com/docs/api-reference/chat/create#chat-create-max_tokens
-          MAX_PATCH_LENGTH: 5000 # Default: 10000, if the patch/diff length is large than MAX_PATCH_LENGTH, will be ignored and won't review. By default, with no MAX_PATCH_LENGTH set, there is also no limit for the patch/diff length.
+          MAX_PATCH_LENGTH: 5000 # Default: 50000, if the patch/diff length is large than MAX_PATCH_LENGTH, will be ignored and won't review. By default, with no MAX_PATCH_LENGTH set, there is also no limit for the patch/diff length.
 ```
 
 ## Self-hosting
