@@ -4,9 +4,9 @@ import minimatch from 'minimatch';
 import { Chat } from './chat.js';
 
 const OPENAI_API_KEY = 'OPENAI_API_KEY';
-const MAX_PATCH_COUNT = process.env.MAX_PATCH_LENGTH
+const MAX_PATCH_LENGTH = process.env.MAX_PATCH_LENGTH
   ? +process.env.MAX_PATCH_LENGTH
-  : 10000;
+  : 50000;
 
 type PullRequest = {
   pullNumber: number;
@@ -129,7 +129,7 @@ export const robot = (app: Probot) => {
       } else if (ignoreList.some(ignore => minimatch(file.filename, ignore))) {
         console.log(`${file.filename} is ignored`);
         continue;
-      } else if (!patch || patch.length > MAX_PATCH_COUNT) {
+      } else if (!patch || patch.length > MAX_PATCH_LENGTH) {
         console.log(`${file.filename} skipped caused by its diff is too large`);
         continue;
       }
