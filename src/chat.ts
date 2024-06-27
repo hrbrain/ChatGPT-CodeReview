@@ -30,7 +30,7 @@ export class Chat {
 
       return `You are a skilled software engineer.
 Below is a code patch${fileTypeMessage}. Please help me review it.
-The review comments must be in the following format in ${answerLanguage}.
+The review comment must be in the following format in ${answerLanguage} and Review Summary must include positive messages and compliments.
 
 Patch
 
